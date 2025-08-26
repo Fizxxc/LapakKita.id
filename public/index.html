@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LapakKita - Beranda</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    /* Loading overlay */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 9999;
+    }
+
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 6px solid #eee;
+      border-top: 6px solid #9b06c4;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    #app {
+      display: none;
+    }
+
+    .produk {
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    nav {
+      /* background: #333; */
+      /* biar lebih kontras */
+      padding: 10px;
+      text-align: center;
+    }
+
+    nav .nav-link {
+      text-decoration: none;
+      /* hilangkan garis */
+      color: #ffffff;
+      /* warna putih */
+      margin: 0 10px;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    nav .nav-link:hover {
+      color: #ffcc00;
+      /* warna saat hover */
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Loading Realtime -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <h2>Memuat LapakKita...</h2>
+    <p>#LapakKita</p>
+  </div>
+
+  <!-- Konten utama -->
+  <div id="app">
+    <header>
+      <h1>LapakKita</h1>
+      <nav>
+        <a href="login.html" class="nav-link">Login</a> |
+        <a href="register.html" class="nav-link">Register</a>
+      </nav>
+    </header>
+    <main>
+      <h2 style="margin-top: 10%; text-align: center;">Produk Tersedia</h2>
+      <div id="produk-list"></div>
+    </main>
+  </div>
+
+  <!-- Script Firebase modular -->
+  <script type="module">
+    import { db, ref, onValue } from "./js/firebase.js";
+
+    const produkList = document.getElementById("produk-list");
+    const loading = document.getElementById("loading");
+    const app = document.getElementById("app");
+
+    // Ambil data produk realtime
+    const produkRef = ref(db, "products");
+    onValue(produkRef, (snapshot) => {
+      produkList.innerHTML = "";
+      if (snapshot.exists()) {
+        snapshot.forEach(child => {
+          const p = child.val();
+          const div = document.createElement("div");
+          div.className = "produk";
+          div.innerHTML = `
+            <h3>${p.nama}</h3>
+            <p>${p.deskripsi}</p>
+            <strong>Rp ${p.harga}</strong>
+          `;
+          produkList.appendChild(div);
+        });
+      } else {
+        produkList.innerHTML = "<p>Belum ada produk tersedia.</p>";
+      }
+
+      // Sembunyikan loading & tampilkan app
+      loading.style.display = "none";
+      app.style.display = "block";
+    }, (error) => {
+      Swal.fire("Error", "Gagal memuat produk: " + error.message, "error");
+      loading.style.display = "none";
+      app.style.display = "block";
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "public/index.html" },
+    { "source": "/login", "destination": "public/login.html" },
+    { "source": "/register", "destination": "public/register.html" },
+    { "source": "/admin-login", "destination": "public/admin-login.html" },
+    { "source": "/admin", "destination": "public/admin-dashboard.html" },
+    { "source": "/user", "destination": "public/user-dashboard.html" }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
+}

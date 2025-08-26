@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>User Dashboard - LapakKita</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <h2>Dashboard User</h2>
+  <button id="logoutBtn">Logout</button>
+  
+  <h3>Tambah Produk</h3>
+  <input type="text" id="productName" placeholder="Nama Produk">
+  <input type="text" id="productPrice" placeholder="Harga">
+  <button id="addProductBtn">Tambah</button>
+
+  <h3>Produk Saya</h3>
+  <ul id="myProducts"></ul>
+
+  <script type="module" src="firebase.js"></script>
+  <script type="module">
+    import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+    import { ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    const addProductBtn = document.getElementById("addProductBtn");
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) window.location.href = "login.html";
+      else {
+        const myProductsRef = ref(db, "products");
+        onValue(myProductsRef, (snapshot) => {
+          const products = snapshot.val();
+          const list = document.getElementById("myProducts");
+          list.innerHTML = "";
+          for (let id in products) {
+            if (products[id].owner === user.uid) {
+              let li = document.createElement("li");
+              li.textContent = `${products[id].name} - Rp${products[id].price} [${products[id].status}]`;
+              list.appendChild(li);
+            }
+          }
+        });
+      }
+    });
+
+    addProductBtn.addEventListener("click", () => {
+      const user = auth.currentUser;
+      const productName = productName.value;
+      const productPrice = productPrice.value;
+      push(ref(db, "products"), {
+        name: productName,
+        price: productPrice,
+        status: "Menunggu persetujuan",
+        owner: user.uid
+      });
+    });
+
+    logoutBtn.addEventListener("click", () => {
+      signOut(auth).then(() => {
+        window.location.href = "login.html";
+      });
+    });
+  </script>
+</body>
+</html>

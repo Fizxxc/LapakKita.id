@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - LapakKita</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <h2>Dashboard Admin</h2>
+  <button id="logoutBtn">Logout</button>
+
+  <h3>Produk Pending</h3>
+  <ul id="pendingProducts"></ul>
+
+  <script type="module" src="firebase.js"></script>
+  <script type="module">
+    import { signOut } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+    import { ref, onValue, update } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+    const list = document.getElementById("pendingProducts");
+
+    onValue(ref(db, "products"), (snapshot) => {
+      list.innerHTML = "";
+      const products = snapshot.val();
+      for (let id in products) {
+        if (products[id].status === "Menunggu persetujuan") {
+          let li = document.createElement("li");
+          li.textContent = `${products[id].name} - Rp${products[id].price}`;
+          let approveBtn = document.createElement("button");
+          approveBtn.textContent = "Setujui";
+          approveBtn.onclick = () => {
+            update(ref(db, "products/" + id), { status: "Disetujui" });
+          };
+          let rejectBtn = document.createElement("button");
+          rejectBtn.textContent = "Tolak";
+          rejectBtn.onclick = () => {
+            update(ref(db, "products/" + id), { status: "Ditolak" });
+          };
+          li.appendChild(approveBtn);
+          li.appendChild(rejectBtn);
+          list.appendChild(li);
+        }
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      signOut(auth).then(() => window.location.href = "admin-login.html");
+    });
+  </script>
+</body>
+</html>

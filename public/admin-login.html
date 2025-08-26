@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login - LapakKita</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <h2>Login Admin</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <button id="adminLoginBtn">Login</button>
+
+  <script type="module" src="firebase.js"></script>
+  <script type="module">
+    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+    import { ref, get } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+    document.getElementById("adminLoginBtn").addEventListener("click", () => {
+      const email = email.value;
+      const password = password.value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then(cred => {
+          get(ref(db, "users/" + cred.user.uid)).then(snapshot => {
+            if (snapshot.exists() && snapshot.val().role === "admin") {
+              window.location.href = "admin-dashboard.html";
+            } else {
+              alert("Anda bukan admin!");
+            }
+          });
+        })
+        .catch(err => alert("Login gagal: " + err.message));
+    });
+  </script>
+</body>
+</html>
