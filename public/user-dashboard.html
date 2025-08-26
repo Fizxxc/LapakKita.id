@@ -4,30 +4,96 @@
   <meta charset="UTF-8">
   <title>User Dashboard - LapakKita</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+    header {
+      background: #6C63FF;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h2 {
+      margin: 0;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    input {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background: #6C63FF;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #5548d6;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: #f8f9fb;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border-left: 4px solid #6C63FF;
+    }
+  </style>
 </head>
 <body>
-  <h2>Dashboard User</h2>
-  <button id="logoutBtn">Logout</button>
+  <header>
+    <h2>Dashboard User</h2>
+    <button id="logoutBtn">Logout</button>
+  </header>
   
-  <h3>Tambah Produk</h3>
-  <input type="text" id="productName" placeholder="Nama Produk">
-  <input type="text" id="productPrice" placeholder="Harga">
-  <button id="addProductBtn">Tambah</button>
+  <div class="card">
+    <h3>Tambah Produk</h3>
+    <input type="text" id="productName" placeholder="Nama Produk">
+    <input type="number" id="productPrice" placeholder="Harga">
+    <button id="addProductBtn">Tambah</button>
+  </div>
 
-  <h3>Produk Saya</h3>
-  <ul id="myProducts"></ul>
+  <div class="card">
+    <h3>Produk Saya</h3>
+    <ul id="myProducts"></ul>
+  </div>
 
-  <script type="module" src="firebase.js"></script>
   <script type="module">
+    import { auth, db } from "./js/firebase.js";
     import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
-    import { ref, push, onValue, auth } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+    import { ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
 
     const logoutBtn = document.getElementById("logoutBtn");
     const addProductBtn = document.getElementById("addProductBtn");
 
+    // cek user login
     onAuthStateChanged(auth, (user) => {
-      if (!user) window.location.href = "login.html";
-      else {
+      if (!user) {
+        window.location.href = "login.html";
+      } else {
         const myProductsRef = ref(db, "products");
         onValue(myProductsRef, (snapshot) => {
           const products = snapshot.val();
@@ -44,18 +110,29 @@
       }
     });
 
+    // tambah produk
     addProductBtn.addEventListener("click", () => {
       const user = auth.currentUser;
-      const productName = productName.value;
-      const productPrice = productPrice.value;
+      const name = document.getElementById("productName").value.trim();
+      const price = document.getElementById("productPrice").value.trim();
+
+      if (!name || !price) {
+        alert("Nama dan harga produk wajib diisi!");
+        return;
+      }
+
       push(ref(db, "products"), {
-        name: productName,
-        price: productPrice,
+        name: name,
+        price: price,
         status: "Menunggu persetujuan",
         owner: user.uid
       });
+
+      document.getElementById("productName").value = "";
+      document.getElementById("productPrice").value = "";
     });
 
+    // logout
     logoutBtn.addEventListener("click", () => {
       signOut(auth).then(() => {
         window.location.href = "login.html";
