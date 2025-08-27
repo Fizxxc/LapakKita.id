@@ -20,9 +20,7 @@
       justify-content: space-between;
       align-items: center;
     }
-    h2 {
-      margin: 0;
-    }
+    h2 { margin: 0; }
     .card {
       background: white;
       padding: 20px;
@@ -30,12 +28,16 @@
       margin-top: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    input {
+    input, textarea {
       padding: 10px;
       margin: 5px 0;
       width: 100%;
       border: 1px solid #ddd;
       border-radius: 8px;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
     }
     button {
       padding: 10px 20px;
@@ -47,19 +49,20 @@
       margin-top: 10px;
       transition: 0.2s;
     }
-    button:hover {
-      background: #5548d6;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
+    button:hover { background: #5548d6; }
+    ul { list-style: none; padding: 0; }
     li {
       background: #f8f9fb;
       padding: 10px;
       border-radius: 8px;
       margin-bottom: 8px;
       border-left: 4px solid #6C63FF;
+    }
+    .seller {
+      font-size: 0.8rem;
+      color: #555;
+      margin-top: 4px;
+      text-align: right;
     }
   </style>
 </head>
@@ -72,6 +75,7 @@
   <div class="card">
     <h3>Tambah Produk</h3>
     <input type="text" id="productName" placeholder="Nama Produk">
+    <textarea id="productDesc" placeholder="Deskripsi Produk"></textarea>
     <input type="number" id="productPrice" placeholder="Harga">
     <button id="addProductBtn">Tambah</button>
   </div>
@@ -102,7 +106,12 @@
           for (let id in products) {
             if (products[id].owner === user.uid) {
               let li = document.createElement("li");
-              li.textContent = `${products[id].name} - Rp${products[id].price} [${products[id].status}]`;
+              li.innerHTML = `
+                <strong>${products[id].name}</strong> - Rp${products[id].price} <br>
+                <em>${products[id].desc || "Tidak ada deskripsi"}</em>
+                <div class="seller">Penjual: ${products[id].seller || "Anonim"}</div>
+                <small>[${products[id].status}]</small>
+              `;
               list.appendChild(li);
             }
           }
@@ -114,6 +123,7 @@
     addProductBtn.addEventListener("click", () => {
       const user = auth.currentUser;
       const name = document.getElementById("productName").value.trim();
+      const desc = document.getElementById("productDesc").value.trim();
       const price = document.getElementById("productPrice").value.trim();
 
       if (!name || !price) {
@@ -123,12 +133,15 @@
 
       push(ref(db, "products"), {
         name: name,
+        desc: desc || "",
         price: price,
         status: "Menunggu persetujuan",
-        owner: user.uid
+        owner: user.uid,
+        seller: user.displayName || user.email // simpan nama/email penjual
       });
 
       document.getElementById("productName").value = "";
+      document.getElementById("productDesc").value = "";
       document.getElementById("productPrice").value = "";
     });
 
