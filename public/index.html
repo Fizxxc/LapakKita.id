@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,12 +41,8 @@
     }
 
     @keyframes spin {
-      0% {
-        transform: rotate(0);
-      }
-      100% {
-        transform: rotate(360deg);
-      }
+      0% { transform: rotate(0); }
+      100% { transform: rotate(360deg); }
     }
 
     header {
@@ -62,9 +59,7 @@
       text-shadow: 0 0 10px rgba(200, 162, 255, 0.6);
     }
 
-    nav {
-      margin-top: 10px;
-    }
+    nav { margin-top: 10px; }
 
     nav .nav-link {
       text-decoration: none;
@@ -74,9 +69,7 @@
       transition: color 0.3s ease;
     }
 
-    nav .nav-link:hover {
-      color: #ffcc00;
-    }
+    nav .nav-link:hover { color: #ffcc00; }
 
     main {
       padding: 30px;
@@ -106,25 +99,13 @@
       transition: transform 0.3s ease;
     }
 
-    .produk:hover {
-      transform: translateY(-6px);
-    }
+    .produk:hover { transform: translateY(-6px); }
 
-    .produk h3 {
-      margin: 10px 0;
-      color: #c8a2ff;
-    }
+    .produk h3 { margin: 10px 0; color: #c8a2ff; }
 
-    .produk p {
-      font-size: 0.9rem;
-      margin-bottom: 10px;
-      color: #ddd;
-    }
+    .produk p { font-size: 0.9rem; margin-bottom: 10px; color: #ddd; }
 
-    .produk strong {
-      color: #ffcc00;
-      font-size: 1.1rem;
-    }
+    .produk strong { color: #ffcc00; font-size: 1.1rem; }
 
     #logoutBtn {
       background: #6c63ff;
@@ -137,27 +118,23 @@
       transition: 0.3s;
     }
 
-    #logoutBtn:hover {
-      background: #5548d8;
-    }
+    #logoutBtn:hover { background: #5548d8; }
   </style>
 </head>
 
 <body>
-  <!-- Loading Realtime -->
+  <!-- Loading -->
   <div id="loading">
     <div class="spinner"></div>
     <h2>Memuat LapakKita...</h2>
     <p>#LapakKita</p>
   </div>
 
-  <!-- Konten utama -->
+  <!-- App -->
   <div id="app" style="display:none;">
     <header>
       <h1>LapakKita</h1>
-      <nav id="navMenu">
-        <!-- Dinamis tergantung login -->
-      </nav>
+      <nav id="navMenu"></nav>
     </header>
     <main>
       <h2>Produk Tersedia</h2>
@@ -165,7 +142,7 @@
     </main>
   </div>
 
-  <!-- Script Firebase modular -->
+  <!-- Firebase -->
   <script type="module">
     import { db, ref, onValue, auth, onAuthStateChanged, signOut } from "./js/firebase.js";
 
@@ -174,7 +151,7 @@
     const app = document.getElementById("app");
     const navMenu = document.getElementById("navMenu");
 
-    // Render menu sesuai login
+    // Navbar dinamis
     function renderNav(user) {
       if (user) {
         navMenu.innerHTML = `<button id="logoutBtn">Logout</button>`;
@@ -190,24 +167,29 @@
       }
     }
 
-    // Cek auth state
     onAuthStateChanged(auth, (user) => {
       renderNav(user);
     });
 
-    // Ambil data produk realtime
+    // Ambil produk dari Firebase
     const produkRef = ref(db, "products");
     onValue(produkRef, (snapshot) => {
       produkList.innerHTML = "";
       if (snapshot.exists()) {
         snapshot.forEach(child => {
           const p = child.val();
+          const nama = p.nama || "Produk Tanpa Nama";
+          const deskripsi = p.deskripsi || "Tidak ada deskripsi";
+          const harga = (p.harga && !isNaN(p.harga)) 
+            ? "Rp " + Number(p.harga).toLocaleString("id-ID") 
+            : "Harga tidak tersedia";
+
           const div = document.createElement("div");
           div.className = "produk";
           div.innerHTML = `
-            <h3>${p.nama}</h3>
-            <p>${p.deskripsi}</p>
-            <strong>Rp ${p.harga.toLocaleString("id-ID")}</strong>
+            <h3>${nama}</h3>
+            <p>${deskripsi}</p>
+            <strong>${harga}</strong>
           `;
           produkList.appendChild(div);
         });
@@ -215,7 +197,6 @@
         produkList.innerHTML = "<p style='text-align:center;'>Belum ada produk tersedia.</p>";
       }
 
-      // Tampilkan app
       loading.style.display = "none";
       app.style.display = "block";
     }, (error) => {
@@ -225,5 +206,4 @@
     });
   </script>
 </body>
-
 </html>
