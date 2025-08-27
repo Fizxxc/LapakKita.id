@@ -172,38 +172,51 @@
     });
 
     // Ambil produk dari Firebase
-    const produkRef = ref(db, "products");
-    onValue(produkRef, (snapshot) => {
-      produkList.innerHTML = "";
-      if (snapshot.exists()) {
-        snapshot.forEach(child => {
-          const p = child.val();
-          const nama = p.nama || "Produk Tanpa Nama";
-          const deskripsi = p.deskripsi || "Tidak ada deskripsi";
-          const harga = (p.harga && !isNaN(p.harga)) 
-            ? "Rp " + Number(p.harga).toLocaleString("id-ID") 
-            : "Harga tidak tersedia";
+    // Ambil produk dari Firebase
+const produkRef = ref(db, "products");
+onValue(produkRef, (snapshot) => {
+  produkList.innerHTML = "";
+  if (snapshot.exists()) {
+    let adaProduk = false;
+    snapshot.forEach(child => {
+      const p = child.val();
 
-          const div = document.createElement("div");
-          div.className = "produk";
-          div.innerHTML = `
-            <h3>${nama}</h3>
-            <p>${deskripsi}</p>
-            <strong>${harga}</strong>
-          `;
-          produkList.appendChild(div);
-        });
-      } else {
-        produkList.innerHTML = "<p style='text-align:center;'>Belum ada produk tersedia.</p>";
-      }
+      // ⛔ skip kalau belum disetujui admin
+      if (p.status !== "Disetujui") return;
 
-      loading.style.display = "none";
-      app.style.display = "block";
-    }, (error) => {
-      Swal.fire("Error", "Gagal memuat produk: " + error.message, "error");
-      loading.style.display = "none";
-      app.style.display = "block";
+      adaProduk = true;
+      const nama = p.name || "Produk Tanpa Nama";
+      const deskripsi = p.desc || "Tidak ada deskripsi";
+      const harga = (p.price && !isNaN(p.price)) 
+        ? "Rp " + Number(p.price).toLocaleString("id-ID") 
+        : "Harga tidak tersedia";
+      const seller = p.seller || "Anonim";
+
+      const div = document.createElement("div");
+      div.className = "produk";
+      div.innerHTML = `
+        <h3>${nama}</h3>
+        <p>${deskripsi}</p>
+        <strong>${harga}</strong>
+        <p style="font-size:0.8rem; margin-top:8px; color:#aaa;">Penjual: ${seller}</p>
+      `;
+      produkList.appendChild(div);
     });
+
+    if (!adaProduk) {
+      produkList.innerHTML = "<p style='text-align:center;'>Belum ada produk tersedia.</p>";
+    }
+  } else {
+    produkList.innerHTML = "<p style='text-align:center;'>Belum ada produk tersedia.</p>";
+  }
+
+  loading.style.display = "none";
+  app.style.display = "block";
+}, (error) => {
+  Swal.fire("Error", "Gagal memuat produk: " + error.message, "error");
+  loading.style.display = "none";
+  app.style.display = "block";
+});
   </script>
 </body>
 </html>
