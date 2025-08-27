@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LapakKita - Beranda</title>
-  <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #fff;
+    }
+
     /* Loading overlay */
     #loading {
       position: fixed;
@@ -15,18 +20,19 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: #fff;
+      background: #0f0c29;
       display: flex;
       justify-content: center;
       align-items: center;
       flex-direction: column;
       z-index: 9999;
+      color: #fff;
     }
 
     .spinner {
       width: 60px;
       height: 60px;
-      border: 6px solid #eee;
+      border: 6px solid rgba(255, 255, 255, 0.2);
       border-top: 6px solid #9b06c4;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -37,44 +43,102 @@
       0% {
         transform: rotate(0);
       }
-
       100% {
         transform: rotate(360deg);
       }
     }
 
-    #app {
-      display: none;
+    header {
+      padding: 20px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(6px);
     }
 
-    .produk {
-      border: 1px solid #ddd;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 8px;
-      background: #fafafa;
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+      color: #c8a2ff;
+      text-shadow: 0 0 10px rgba(200, 162, 255, 0.6);
     }
 
     nav {
-      /* background: #333; */
-      /* biar lebih kontras */
-      padding: 10px;
-      text-align: center;
+      margin-top: 10px;
     }
 
     nav .nav-link {
       text-decoration: none;
-      /* hilangkan garis */
-      color: #ffffff;
-      /* warna putih */
-      margin: 0 10px;
+      color: #fff;
+      margin: 0 15px;
       font-weight: 600;
       transition: color 0.3s ease;
     }
 
     nav .nav-link:hover {
       color: #ffcc00;
-      /* warna saat hover */
+    }
+
+    main {
+      padding: 30px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    #produk-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .produk {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(8px);
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+      transition: transform 0.3s ease;
+    }
+
+    .produk:hover {
+      transform: translateY(-6px);
+    }
+
+    .produk h3 {
+      margin: 10px 0;
+      color: #c8a2ff;
+    }
+
+    .produk p {
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      color: #ddd;
+    }
+
+    .produk strong {
+      color: #ffcc00;
+      font-size: 1.1rem;
+    }
+
+    #logoutBtn {
+      background: #6c63ff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    #logoutBtn:hover {
+      background: #5548d8;
     }
   </style>
 </head>
@@ -88,27 +152,48 @@
   </div>
 
   <!-- Konten utama -->
-  <div id="app">
+  <div id="app" style="display:none;">
     <header>
       <h1>LapakKita</h1>
-      <nav>
-        <a href="login.html" class="nav-link">Login</a> |
-        <a href="register.html" class="nav-link">Register</a>
+      <nav id="navMenu">
+        <!-- Dinamis tergantung login -->
       </nav>
     </header>
     <main>
-      <h2 style="margin-top: 10%; text-align: center;">Produk Tersedia</h2>
+      <h2>Produk Tersedia</h2>
       <div id="produk-list"></div>
     </main>
   </div>
 
   <!-- Script Firebase modular -->
   <script type="module">
-    import { db, ref, onValue, auth } from "./js/firebase.js";
+    import { db, ref, onValue, auth, onAuthStateChanged, signOut } from "./js/firebase.js";
 
     const produkList = document.getElementById("produk-list");
     const loading = document.getElementById("loading");
     const app = document.getElementById("app");
+    const navMenu = document.getElementById("navMenu");
+
+    // Render menu sesuai login
+    function renderNav(user) {
+      if (user) {
+        navMenu.innerHTML = `<button id="logoutBtn">Logout</button>`;
+        document.getElementById("logoutBtn").addEventListener("click", async () => {
+          await signOut(auth);
+          Swal.fire("Logout berhasil", "", "success");
+        });
+      } else {
+        navMenu.innerHTML = `
+          <a href="login.html" class="nav-link">Login</a> |
+          <a href="register.html" class="nav-link">Register</a>
+        `;
+      }
+    }
+
+    // Cek auth state
+    onAuthStateChanged(auth, (user) => {
+      renderNav(user);
+    });
 
     // Ambil data produk realtime
     const produkRef = ref(db, "products");
@@ -122,15 +207,15 @@
           div.innerHTML = `
             <h3>${p.nama}</h3>
             <p>${p.deskripsi}</p>
-            <strong>Rp ${p.harga}</strong>
+            <strong>Rp ${p.harga.toLocaleString("id-ID")}</strong>
           `;
           produkList.appendChild(div);
         });
       } else {
-        produkList.innerHTML = "<p>Belum ada produk tersedia.</p>";
+        produkList.innerHTML = "<p style='text-align:center;'>Belum ada produk tersedia.</p>";
       }
 
-      // Sembunyikan loading & tampilkan app
+      // Tampilkan app
       loading.style.display = "none";
       app.style.display = "block";
     }, (error) => {
