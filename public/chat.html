@@ -84,7 +84,7 @@
       if (e.key === "Enter") sendMessage();
     });
 
-// Tinggalkan chat
+ // Tinggalkan chat
     function leaveChat() {
       db.ref("chats/" + chatId + "/status").set({
         leftBy: userId,
@@ -95,6 +95,28 @@
         document.getElementById("messageInput").disabled = true;
       });
     }
+
+    // Listener pesan & status
+    db.ref("chats/" + chatId).on("value", (snap) => {
+      const data = snap.val();
+      const chatBox = document.getElementById("chatBox");
+      chatBox.innerHTML = "";
+
+      if (data && data.messages) {
+        Object.values(data.messages).forEach(msg => {
+          const p = document.createElement("p");
+          p.textContent = msg.sender + ": " + msg.text;
+          chatBox.appendChild(p);
+        });
+      }
+
+      if (data && data.status && data.status.leftBy) {
+        const info = document.createElement("p");
+        info.style.color = "red";
+        info.textContent = "⚠️ " + data.status.message;
+        chatBox.appendChild(info);
+      }
+    });
   </script>
 </body>
 </html>
