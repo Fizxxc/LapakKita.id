@@ -24,9 +24,12 @@
       animation:spin 1s linear infinite; margin-bottom:12px;
     }
     @keyframes spin {0%{transform:rotate(0);}100%{transform:rotate(360deg);}}
-    header { padding:20px; text-align:center; background:rgba(0,0,0,0.4); backdrop-filter:blur(6px);}
+    header { padding:20px; display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.4); backdrop-filter:blur(6px);}
     header h1 { margin:0; font-size:2rem; color:#c8a2ff; text-shadow:0 0 10px rgba(200,162,255,.6);}
-    nav .nav-link { color:#fff; margin:0 15px; text-decoration:none; font-weight:600;}
+    nav { display:flex; align-items:center; gap:15px;}
+    nav .nav-link, nav button { color:#fff; background:none; border:none; font-weight:600; cursor:pointer; text-decoration:none;}
+    nav .chat-btn { display:flex; align-items:center; gap:6px; padding:6px 10px; border-radius:8px; transition:.3s;}
+    nav .chat-btn:hover { background:rgba(255,255,255,0.1);}
     main { padding:30px; max-width:1000px; margin:auto;}
     #produk-list { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:20px;}
     .produk { background:rgba(255,255,255,0.08); padding:20px; border-radius:16px; text-align:center; }
@@ -63,13 +66,27 @@
 
     function renderNav(user){
       if(user){
-        navMenu.innerHTML=`<button id="logoutBtn">Logout</button>`;
+        navMenu.innerHTML = `
+          <a href="chatlist.html" class="chat-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" 
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+              class="lucide lucide-message-circle">
+              <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 
+              1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 
+              10 10 0 1 0-4.777-4.719"/>
+            </svg>
+            Chat Room
+          </a>
+          <button id="logoutBtn">Logout</button>
+        `;
         document.getElementById("logoutBtn").onclick=async()=>{
           await signOut(auth); Swal.fire("Logout berhasil","","success");
         };
       }else{
-        navMenu.innerHTML=`<a href="login.html" class="nav-link">Login</a>
-        | <a href="register.html" class="nav-link">Register</a>`;
+        navMenu.innerHTML=`
+          <a href="login.html" class="nav-link">Login</a>
+          | <a href="register.html" class="nav-link">Register</a>`;
       }
     }
     onAuthStateChanged(auth,(user)=>{renderNav(user);});
