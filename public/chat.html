@@ -12,6 +12,7 @@
     .msg{margin:5px 0;padding:8px 12px;border-radius:12px;max-width:70%;}
     .me{background:#6c63ff;margin-left:auto;}
     .other{background:#444;}
+    .system{background:transparent;color:#aaa;font-style:italic;text-align:center;}
     footer{display:flex;padding:10px;background:#24243e;}
     footer input{flex:1;padding:8px;border:none;border-radius:8px;}
     footer button{margin-left:8px;background:#6c63ff;border:none;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;}
@@ -23,12 +24,13 @@
   <footer>
     <input id="msgInput" placeholder="Ketik pesan...">
     <button id="sendBtn">Kirim</button>
+    <button onclick="leaveChat()">Tinggalkan Chat</button>
   </footer>
 
   <script type="module">
     import { auth, db } from "./js/firebase.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
-    import { ref, onChildAdded, push } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+    import { ref, onChildAdded, push, update } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
 
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get("chatId");
@@ -52,8 +54,15 @@
       onChildAdded(msgRef, (snap) => {
         const m = snap.val();
         const div = document.createElement("div");
-        div.className = "msg " + (m.senderId === currentUser.uid ? "me" : "other");
-        div.textContent = m.text;
+
+        if (m.senderId === "system") {
+          div.className = "msg system";
+          div.textContent = m.text;
+        } else {
+          div.className = "msg " + (m.senderId === currentUser.uid ? "me" : "other");
+          div.textContent = m.text;
+        }
+
         messagesDiv.appendChild(div);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
@@ -74,6 +83,18 @@
     input.addEventListener("keypress", (e) => {
       if (e.key === "Enter") sendMessage();
     });
+
+// Tinggalkan chat
+    function leaveChat() {
+      db.ref("chats/" + chatId + "/status").set({
+        leftBy: userId,
+        leftAt: Date.now(),
+        message: "User ini telah meninggalkan chat."
+      }).then(() => {
+        alert("Kamu sudah meninggalkan chat.");
+        document.getElementById("messageInput").disabled = true;
+      });
+    }
   </script>
 </body>
 </html>
