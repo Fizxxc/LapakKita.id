@@ -118,7 +118,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: CHAT_ID,
-          text: `📩 Notifikasi Pendaftaran 17 Agustus RT 03\nEmail: ${email}`
+          text: `📩 Notifikasi dari LapakKita.id\nEmail: ${email}`
         })
       })
       .then(() => {
@@ -131,7 +131,7 @@
           document.getElementById('subscribeBtn').disabled = false;
         }, 2000);
       })
-      .catch(() => alert('Gagal mengirim data ke bot Telegram.'));
+      .catch(() => alert('Gagal mengirim data ke admin.'));
     });
   </script>
 </body>
