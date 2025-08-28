@@ -35,10 +35,7 @@
       border: 1px solid #ddd;
       border-radius: 8px;
     }
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
+    textarea { resize: vertical; min-height: 80px; }
     button {
       padding: 10px 20px;
       border: none;
@@ -64,6 +61,8 @@
       margin-top: 4px;
       text-align: right;
     }
+    .chat-item { cursor: pointer; }
+    .chat-item:hover { background: #ececff; }
   </style>
 </head>
 <body>
@@ -85,6 +84,11 @@
     <ul id="myProducts"></ul>
   </div>
 
+  <div class="card">
+    <h3>Chat Masuk</h3>
+    <ul id="myChats"></ul>
+  </div>
+
   <script type="module">
     import { auth, db } from "./js/firebase.js";
     import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
@@ -93,31 +97,65 @@
     const logoutBtn = document.getElementById("logoutBtn");
     const addProductBtn = document.getElementById("addProductBtn");
 
+    let currentUser = null;
+
     // cek user login
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         window.location.href = "login.html";
       } else {
-        const myProductsRef = ref(db, "products");
-        onValue(myProductsRef, (snapshot) => {
-          const products = snapshot.val();
-          const list = document.getElementById("myProducts");
-          list.innerHTML = "";
-          for (let id in products) {
-            if (products[id].owner === user.uid) {
-              let li = document.createElement("li");
-              li.innerHTML = `
-                <strong>${products[id].name}</strong> - Rp${products[id].price} <br>
-                <em>${products[id].desc || "Tidak ada deskripsi"}</em>
-                <div class="seller">Penjual: ${products[id].seller || "Anonim"}</div>
-                <small>[${products[id].status}]</small>
-              `;
-              list.appendChild(li);
-            }
-          }
-        });
+        currentUser = user;
+        loadMyProducts(user);
+        loadMyChats(user);
       }
     });
+
+    function loadMyProducts(user){
+      const myProductsRef = ref(db, "products");
+      onValue(myProductsRef, (snapshot) => {
+        const products = snapshot.val() || {};
+        const list = document.getElementById("myProducts");
+        list.innerHTML = "";
+        for (let id in products) {
+          if (products[id].owner === user.uid) {
+            let li = document.createElement("li");
+            li.innerHTML = `
+              <strong>${products[id].name}</strong> - Rp${products[id].price} <br>
+              <em>${products[id].desc || "Tidak ada deskripsi"}</em>
+              <div class="seller">Penjual: ${products[id].seller || "Anonim"}</div>
+              <small>[${products[id].status}]</small>
+            `;
+            list.appendChild(li);
+          }
+        }
+      });
+    }
+
+    // load chat untuk seller
+    function loadMyChats(user){
+      const myChatsRef = ref(db, "chats");
+      onValue(myChatsRef, (snapshot) => {
+        const chats = snapshot.val() || {};
+        const list = document.getElementById("myChats");
+        list.innerHTML = "";
+        for (let chatId in chats) {
+          const c = chats[chatId];
+          if (c.sellerId === user.uid) {
+            let li = document.createElement("li");
+            li.className = "chat-item";
+            li.innerHTML = `
+              <strong>Chat Produk:</strong> ${c.productId} <br>
+              <small>Pembeli: ${c.buyerId}</small>
+            `;
+            li.onclick = () => {
+              window.location.href = `chat.html?chatId=${chatId}`;
+            };
+            list.appendChild(li);
+          }
+        }
+        if(list.innerHTML === "") list.innerHTML = "<li>Belum ada chat masuk</li>";
+      });
+    }
 
     // tambah produk
     addProductBtn.addEventListener("click", () => {
@@ -137,7 +175,8 @@
         price: price,
         status: "Menunggu persetujuan",
         owner: user.uid,
-        seller: user.displayName || user.email // simpan nama/email penjual
+        seller: user.displayName || user.email,
+        sellerId: user.uid   // ✅ simpan sellerId supaya bisa dipakai saat buat chat
       });
 
       document.getElementById("productName").value = "";
