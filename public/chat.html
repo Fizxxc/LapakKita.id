@@ -26,38 +26,54 @@
   </footer>
 
   <script type="module">
-    import { db, ref, onChildAdded, push, set, auth, onAuthStateChanged } from "./js/firebase.js";
+    import { auth, db } from "./js/firebase.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+    import { ref, onChildAdded, push } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
 
-    const urlParams=new URLSearchParams(window.location.search);
-    const chatId=urlParams.get("chatId");
-    const messagesDiv=document.getElementById("messages");
-    const input=document.getElementById("msgInput");
-    const sendBtn=document.getElementById("sendBtn");
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatId = urlParams.get("chatId");
+    const messagesDiv = document.getElementById("messages");
+    const input = document.getElementById("msgInput");
+    const sendBtn = document.getElementById("sendBtn");
 
-    let currentUser=null;
-    onAuthStateChanged(auth,(user)=>{
-      if(!user){Swal.fire("Harus login","","warning").then(()=>location.href="login.html");}
-      else{currentUser=user; loadChat();}
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        Swal.fire("Harus login", "", "warning").then(() => location.href = "login.html");
+      } else {
+        currentUser = user;
+        loadChat();
+      }
     });
 
-    function loadChat(){
-      const msgRef=ref(db,`chats/${chatId}/messages`);
-      onChildAdded(msgRef,(snap)=>{
-        const m=snap.val();
-        const div=document.createElement("div");
-        div.className="msg "+(m.senderId===currentUser.uid?"me":"other");
-        div.textContent=m.text;
+    function loadChat() {
+      const msgRef = ref(db, `chats/${chatId}/messages`);
+      onChildAdded(msgRef, (snap) => {
+        const m = snap.val();
+        const div = document.createElement("div");
+        div.className = "msg " + (m.senderId === currentUser.uid ? "me" : "other");
+        div.textContent = m.text;
         messagesDiv.appendChild(div);
-        messagesDiv.scrollTop=messagesDiv.scrollHeight;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
     }
 
-    sendBtn.onclick=()=>{
-      if(input.value.trim()==="")return;
-      const msgRef=push(ref(db,`chats/${chatId}/messages`));
-      set(msgRef,{senderId:currentUser.uid,text:input.value.trim(),timestamp:Date.now()});
-      input.value="";
-    };
+    function sendMessage() {
+      if (input.value.trim() === "") return;
+      const msgRef = ref(db, `chats/${chatId}/messages`);
+      push(msgRef, {
+        senderId: currentUser.uid,
+        text: input.value.trim(),
+        timestamp: Date.now()
+      });
+      input.value = "";
+    }
+
+    sendBtn.onclick = sendMessage;
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
   </script>
 </body>
 </html>
