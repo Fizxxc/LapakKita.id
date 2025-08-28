@@ -24,7 +24,7 @@
   <footer>
     <input id="msgInput" placeholder="Ketik pesan...">
     <button id="sendBtn">Kirim</button>
-    <button onclick="leaveChat()">Tinggalkan Chat</button>
+    <button id="leaveBtn">Tinggalkan Chat</button>
   </footer>
 
   <script type="module">
@@ -37,6 +37,7 @@
     const messagesDiv = document.getElementById("messages");
     const input = document.getElementById("msgInput");
     const sendBtn = document.getElementById("sendBtn");
+    const leaveBtn = document.getElementById("leaveBtn");
 
     let currentUser = null;
 
@@ -79,44 +80,39 @@
       input.value = "";
     }
 
+    // kirim pesan
     sendBtn.onclick = sendMessage;
     input.addEventListener("keypress", (e) => {
       if (e.key === "Enter") sendMessage();
     });
 
- // Tinggalkan chat
-    function leaveChat() {
-      db.ref("chats/" + chatId + "/status").set({
-        leftBy: userId,
+    // tinggalkan chat
+    async function leaveChat() {
+      if (!currentUser) return;
+
+      // simpan status di DB
+      const statusRef = ref(db, `chats/${chatId}/status`);
+      await update(statusRef, {
+        leftBy: currentUser.uid,
         leftAt: Date.now(),
-        message: "User ini telah meninggalkan chat."
-      }).then(() => {
-        alert("Kamu sudah meninggalkan chat.");
-        document.getElementById("messageInput").disabled = true;
+        message: `User ${currentUser.email || currentUser.uid} telah meninggalkan chat.`
       });
+
+      // kirim pesan sistem ke dalam chat
+      const msgRef = ref(db, `chats/${chatId}/messages`);
+      push(msgRef, {
+        senderId: "system",
+        text: `🚪 ${currentUser.email || "Pengguna"} meninggalkan chat.`,
+        timestamp: Date.now()
+      });
+
+      Swal.fire("Kamu sudah meninggalkan chat", "", "info");
+      input.disabled = true;
+      sendBtn.disabled = true;
+      leaveBtn.disabled = true;
     }
 
-    // Listener pesan & status
-    db.ref("chats/" + chatId).on("value", (snap) => {
-      const data = snap.val();
-      const chatBox = document.getElementById("chatBox");
-      chatBox.innerHTML = "";
-
-      if (data && data.messages) {
-        Object.values(data.messages).forEach(msg => {
-          const p = document.createElement("p");
-          p.textContent = msg.sender + ": " + msg.text;
-          chatBox.appendChild(p);
-        });
-      }
-
-      if (data && data.status && data.status.leftBy) {
-        const info = document.createElement("p");
-        info.style.color = "red";
-        info.textContent = "⚠️ " + data.status.message;
-        chatBox.appendChild(info);
-      }
-    });
+    leaveBtn.onclick = leaveChat;
   </script>
 </body>
 </html>
