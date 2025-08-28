@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Chat List | LapakKita.id — Maintenance</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root{
       --bg1:#0f172a;
@@ -83,6 +84,7 @@
     </aside>
   </main>
   <script>
+    // countdown
     const target = new Date(2025, 7, 31, 10, 0, 0);
     function pad(n){return n.toString().padStart(2,'0')}
     function updateTimer(){
@@ -107,31 +109,40 @@
     const timerInterval = setInterval(updateTimer, 1000);
     updateTimer();
 
+    // Telegram bot
     const BOT_TOKEN = "6439522031:AAGphEnYCdsDVZQYt-a6mMZmV0zqZ2g6RC8";
     const CHAT_ID = "6450551010";
 
-    document.getElementById('subscribeBtn').addEventListener('click', () => {
+    document.getElementById('subscribeBtn').addEventListener('click', async () => {
       const email = document.getElementById('email').value.trim();
-      if (!email) return alert('Masukkan email valid.');
-      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: CHAT_ID,
-          text: `📩 Notifikasi dari LapakKita.id\nEmail: ${email}`
-        })
-      })
-      .then(() => {
-        document.getElementById('subscribeBtn').textContent = 'Terkirim ✓';
-        document.getElementById('subscribeBtn').disabled = true;
+      if (!email) {
+        Swal.fire({icon:"error",title:"Oops",text:"Masukkan email valid!"});
+        return;
+      }
+
+      try {
+        // 1️⃣ Kirim email ke user via SendGrid (API Route Vercel)
+        await fetch("/api/sendEmail", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+
+        // 2️⃣ Kirim notifikasi ke Telegram admin
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: `📩 Notifikasi baru dari LapakKita.id\nEmail: ${email}`
+          })
+        });
+
+        Swal.fire({icon:"success",title:"Berhasil!",text:"Email kamu sudah terdaftar & notifikasi terkirim."});
         document.getElementById('email').value = '';
-        alert('Terima kasih! Email Anda sudah terdaftar.');
-        setTimeout(() => {
-          document.getElementById('subscribeBtn').textContent = 'Beritahu saya';
-          document.getElementById('subscribeBtn').disabled = false;
-        }, 2000);
-      })
-      .catch(() => alert('Gagal mengirim data ke admin.'));
+      } catch (e) {
+        Swal.fire({icon:"error",title:"Gagal",text:"Terjadi kesalahan. Coba lagi."});
+      }
     });
   </script>
 </body>
